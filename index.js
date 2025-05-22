@@ -12,7 +12,7 @@ const seedRoutes = require('./routes/seed');
 app.use(cookieParser()) 
 app.use(cors({
   credentials:true,
-  origin: 'http://localhost:5173'
+  origin: 'https://frontend-46ab.vercel.app/'
 }));
 app.use(express.json())
 
