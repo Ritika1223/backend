@@ -7,18 +7,18 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser')
 const authRoutes = require('./routes/auth');
 const operatorRoutes = require('./routes/operators');
-const seedRoutes = require('./routes/seed');
+const authUser = require('./routes/userAuth')
 
 app.use(cookieParser()) 
 app.use(cors({
   credentials:true,
-  origin: 'https://frontend-46ab.vercel.app'
+  origin: 'http://localhost:5173' 
 }));
 app.use(express.json())
 
 app.use('/api/auth', authRoutes);
 app.use('/api/operators', operatorRoutes);
-app.use('/api', seedRoutes);
+app.use('/auth', authUser)
 
 app.listen(port, () => {
   console.log(`app listening on port ${port}`)

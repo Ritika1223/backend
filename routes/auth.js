@@ -10,7 +10,7 @@ const USER = {
 const MOCK_TOKEN = 'mocked-jwt-token-123456';
 
 router.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.body; 
 
   console.log('Received login request:', { username });
 
