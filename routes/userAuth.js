@@ -4,6 +4,7 @@ const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 
+const sendOtp = require('../services/sendOtp');
 const otpStore = new Map();
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -19,7 +20,11 @@ router.post("/register/send-otp", async (req, res) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore.set(phone, otp);
-  console.log(`Register OTP for ${phone}: ${otp}`);
+
+  const sent = await sendOtp(phone, otp);
+  if (!sent) {
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
 
   res.json({ message: "OTP sent for registration" });
 });
@@ -56,7 +61,11 @@ router.post("/login/send-otp", async (req, res) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore.set(phone, otp);
-  console.log(`Login OTP for ${phone}: ${otp}`);
+
+  const sent = await sendOtp(phone, otp);
+  if (!sent) {
+    return res.status(500).json({ message: "Failed to send OTP" });
+  }
 
   res.json({ message: "OTP sent for login" });
 });
