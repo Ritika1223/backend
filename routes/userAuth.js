@@ -8,6 +8,23 @@ const sendOtp = require('../services/sendOtp');
 const otpStore = new Map();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// --- Auth Middleware ---
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Token missing or invalid" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded; // contains userId and phone
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
+}
+
 // REGISTER - Send OTP
 router.post("/register/send-otp", async (req, res) => {
   const { phone } = req.body;
@@ -88,5 +105,38 @@ router.post("/login/verify-otp", async (req, res) => {
   const token = jwt.sign({ userId: user._id, phone: user.phone }, JWT_SECRET, { expiresIn: "1h" });
   res.json({ message: "Login successful", token });
 });
+
+// Get User Data
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select("-__v");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update User Data
+router.put("/me", authenticateToken, async (req, res) => {
+  const { name, email } = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { name, email },
+      { new: true, runValidators: true }
+    ).select("-__v");
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "User updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating user", error: err.message });
+  }
+});
+
+
 
 module.exports = router;
