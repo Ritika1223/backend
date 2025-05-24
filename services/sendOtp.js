@@ -9,7 +9,7 @@ const messagingServiceSid = process.env.TWILIO_MSG_SERVICE_SID;
 
 const client = twilio(accountSid, authToken);
 
-async function sendOtp(phone, otp) {
+async function sendOtp(phone, otp) { 
   const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
 
   try {
