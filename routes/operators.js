@@ -1,21 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Operator = require('../models/Operator'); // MongoDB model
+const bcrypt = require("bcryptjs");
 
-const MOCK_TOKEN = 'mocked-jwt-token-123456';
 
-// Middleware for mock auth
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader === `Bearer ${MOCK_TOKEN}`) {
-    next();
-  } else {
-    res.status(401).json({ message: 'Unauthorized' });
-  }
-}; 
 
 // GET only approved operators from MongoDB
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/',  async (req, res) => {
   try {
     const operators = await Operator.find({ approved: true });
     res.json(operators);
@@ -25,7 +16,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 // GET only approved operators from MongoDB
-router.get('/requests', authMiddleware, async (req, res) => {
+router.get('/requests', async (req, res) => {
   try {
     const operators = await Operator.find({ approved: false });
     res.json(operators);
@@ -36,7 +27,7 @@ router.get('/requests', authMiddleware, async (req, res) => {
 });
 
 // GET single operator by ID from MongoDB
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id',  async (req, res) => {
   const operatorId = req.params.id;
 
   try {
@@ -63,7 +54,7 @@ router.post('/', async (req, res) => {
 
 
 // Accept operator request (approve operator)
-router.post('/accept/:id', authMiddleware, async (req, res) => {
+router.post('/accept/:id', async (req, res) => {
   const operatorId = req.params.id;
 
   try {
@@ -85,7 +76,7 @@ router.post('/accept/:id', authMiddleware, async (req, res) => {
 });
 
 // Reject operator request (delete operator)
-router.delete('/reject/:id', authMiddleware, async (req, res) => {
+router.delete('/reject/:id', async (req, res) => {
   const operatorId = req.params.id;
 
   try {
@@ -102,5 +93,39 @@ router.delete('/reject/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ✅ Set operator credentials (username/password)
+router.post('/set-credentials/:id', async (req, res) => {
+  const { username, password } = req.body;
+  const operatorId = req.params.id;
 
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password are required' });
+  }
+
+  try {
+    const operator = await Operator.findById(operatorId);
+
+    // Check if operator exists and is approved
+    if (!operator) {
+      return res.status(404).json({ message: 'Operator not found' });
+    }
+
+    if (!operator.approved) {
+      return res.status(403).json({ message: 'Operator is not approved. Cannot set credentials.' });
+    }
+
+    // Hash the password and update
+    const hashedPassword = await bcrypt.hash(password, 10);
+    operator.username = username;
+    operator.passwordHash = hashedPassword;
+    operator.isCredentialSet = true;
+
+    const savedOperator = await operator.save();
+
+    res.status(200).json({ message: 'Credentials set successfully', operator: savedOperator });
+  } catch (err) {
+    console.error('❌ Error setting credentials:', err);
+    res.status(500).json({ message: 'Error setting credentials', error: err.message });
+  }
+});
 module.exports = router;

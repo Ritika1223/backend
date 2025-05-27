@@ -3,15 +3,25 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
 require('dotenv').config();
+const bcrypt = require('bcrypt');
+const Operator = require('../models/Operator');  // Adjust path as needed
 
-// --- Static Admin Credentials ---
+
+
+// --- Static Admin Username (No password here) ---
 const USER = {
   username: 'admin',
-  password: 'admin'
+  // This hash represents the password 'admin'
+  passwordHash: '$2b$10$1NLuPCcWAvouJAULcINhyObh0azGL7GBfNdsZrPIYwMrtfkPS7X42'
 };
 
 // --- JWT Secret ---
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
+const OPERATOR_JWT_SECRET = process.env.OPERATOR_JWT_SECRET || 'operator-secret';
+
+// --- Admin hashed password from env ---
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
+
 
 // --- Middleware to Verify Admin Token ---
 function authAdmin(req, res, next) {
@@ -33,18 +43,44 @@ function authAdmin(req, res, next) {
 }
 
 // --- /login Route ---
-router.post('/login', (req, res) => {
+router.post('/login',async (req, res) => {
   const { username, password } = req.body;
 
-  if (username === USER.username && password === USER.password) {
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '2h' });
+  if (username === USER.username) {
+    const isMatch = await bcrypt.compare(password, USER.passwordHash);
 
-    return res.status(200).json({
-      message: 'Login successful',
-      token,
-      username
-    });
+    if (isMatch) {
+      const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '2h' });
+
+      return res.status(200).json({
+        message: 'Login successful',
+        token,
+        username
+      });
+    }
   }
+   // --- If Not Admin, Check Operator ---
+    const operator = await Operator.findOne({ username });
+    if (operator && operator.isCredentialSet) {
+      const isMatch = await bcrypt.compare(password, operator.passwordHash);
+      if (isMatch) {
+        const token = jwt.sign({ id: operator._id, username, role: 'operator' }, OPERATOR_JWT_SECRET, { expiresIn: '2h' });
+        return res.status(200).json({
+          message: 'Operator login successful',
+          token,
+          role: 'OPERATOR',
+          operator: {
+            id: operator._id,
+            name: operator.name,
+            username
+          }
+        });
+      }
+    }
+
+    // --- If Nothing Matches ---
+    return res.status(401).json({ message: 'Invalid username or password' });
+
 
   return res.status(401).json({ message: 'Invalid username or password' });
 });

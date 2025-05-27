@@ -40,6 +40,10 @@ const OperatorSchema = new mongoose.Schema({
   panCards: [{ type: String, default: null }],
   photo1: { type: String, default: null },
   photo2: { type: String, default: null },
+   username: { type: String },
+  passwordHash: { type: String },
+  isCredentialSet: { type: Boolean, default: false },
+
   officePhotos: [{ type: String, default: null }]
 }, { timestamps: true });
 
