@@ -1,39 +1,18 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
-  route: {
-    type: String,
-    required: true,
-  },
-  date: {
-    type: String, // Or Date if you want ISO format
-    required: true,
-  },
-  time: {
-    type: String,
-    required: true,
-  },
-  busNumber: {
-    type: String,
-    required: true,
-  },
-  seat: {
-    type: String,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'completed'],
-    default: 'pending',
-  },
-  price: {
-    type: String,
-    required: true,
-  },
-  passengers: {
-    type: Number,
-    default: 1,
-  }
+  customerName: { type: String, required: true },
+  customerPhone: { type: String, required: true },
+  customerEmail: { type: String },
+  fromLocation: { type: String, required: true },
+  toLocation: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String },
+  passengers: { type: Number, default: 1 },
+  vehicleNumber: { type: String },
+  specialRequests: { type: String },
+  amount: { type: Number, default: 0 },
+  status: { type: String, enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed'], default: 'Pending' }
 }, {
   timestamps: true
 });

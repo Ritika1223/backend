@@ -55,24 +55,31 @@ router.post('/login',async (req, res) => {
       return res.status(200).json({
         message: 'Login successful',
         token,
-        username
+        username,
+          role: 'ADMIN'  // ✅ Add this line
+
+        
       });
     }
   }
    // --- If Not Admin, Check Operator ---
-    const operator = await Operator.findOne({ username });
+  const operator = await Operator.findOne({ primaryPhoneNumber: username }); // ✅ replaced `username` lookup
     if (operator && operator.isCredentialSet) {
       const isMatch = await bcrypt.compare(password, operator.passwordHash);
       if (isMatch) {
-        const token = jwt.sign({ id: operator._id, username, role: 'operator' }, OPERATOR_JWT_SECRET, { expiresIn: '2h' });
-        return res.status(200).json({
+ const token = jwt.sign(
+        { id: operator._id, primaryPhoneNumber: operator.primaryPhoneNumber, role: 'OPERATOR' },
+        OPERATOR_JWT_SECRET,
+        { expiresIn: '2h' }
+      );     
+         return res.status(200).json({
           message: 'Operator login successful',
           token,
           role: 'OPERATOR',
           operator: {
             id: operator._id,
             name: operator.name,
-            username
+          primaryPhoneNumber: operator.primaryPhoneNumber
           }
         });
       }
@@ -110,5 +117,6 @@ router.delete('/users/:id', authAdmin, async (req, res) => {
     res.status(500).json({ message: 'Error deleting user', error: err.message });
   }
 });
+
 
 module.exports = router;

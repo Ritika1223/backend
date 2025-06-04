@@ -41,6 +41,8 @@ const OperatorSchema = new mongoose.Schema({
   photo1: { type: String, default: null },
   photo2: { type: String, default: null },
    username: { type: String },
+     primaryPhoneNumber: { type: String, unique: true, required: false }, // ✅ used for login/credentials
+
   passwordHash: { type: String },
   isCredentialSet: { type: Boolean, default: false },
 

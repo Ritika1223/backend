@@ -95,11 +95,11 @@ router.delete('/reject/:id', async (req, res) => {
 
 // ✅ Set operator credentials (username/password)
 router.post('/set-credentials/:id', async (req, res) => {
-  const { username, password } = req.body;
+  const {primaryPhoneNumber, password } = req.body;
   const operatorId = req.params.id;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username and password are required' });
+  if (!primaryPhoneNumber|| !password) {
+    return res.status(400).json({ message: 'Phone number and password are required' });
   }
 
   try {
@@ -116,7 +116,7 @@ router.post('/set-credentials/:id', async (req, res) => {
 
     // Hash the password and update
     const hashedPassword = await bcrypt.hash(password, 10);
-    operator.username = username;
+    operator.primaryPhoneNumber = primaryPhoneNumber; // updated field
     operator.passwordHash = hashedPassword;
     operator.isCredentialSet = true;
 
@@ -128,4 +128,35 @@ router.post('/set-credentials/:id', async (req, res) => {
     res.status(500).json({ message: 'Error setting credentials', error: err.message });
   }
 });
+
+// GET operator profile by ID (for profile page)
+router.get('/:id/profile', async (req, res) => {
+  const operatorId = req.params.id;
+
+  try {
+    const operator = await Operator.findById(operatorId);
+
+    if (!operator) {
+      return res.status(404).json({ message: 'Operator not found' });
+    }
+
+    // Send only the required fields for profile page
+    const profileData = {
+      id: operator._id,
+      name: operator.name,
+      username: operator.username,
+      primaryPhoneNumber: operator.primaryPhoneNumber,
+      password: operator.passwordHash, // ⚠️ Only if you need it
+    };
+
+    res.status(200).json(profileData);
+  } catch (err) {
+    console.error('Error fetching operator profile:', err);
+    res.status(500).json({ message: 'Server error fetching operator profile' });
+  }
+});
+
+
+
+
 module.exports = router;
