@@ -2,10 +2,22 @@ const express = require('express');
 const router = express.Router();
 const Employee = require('../models/Employee');
 
+// Helper to generate employee ID
+function generateEmpId() {
+  return 'EMP' + Date.now().toString().slice(-6); // Example: EMP123456
+}
+
 router.post('/', async (req, res) => {
   try {
     console.log('POST /api/employees body:', req.body);
-    const newEmployee = new Employee(req.body);
+
+    // Auto-generate empId and add to request body
+    const empId = generateEmpId();
+    const newEmployee = new Employee({
+      ...req.body,
+      empId,
+    });
+
     await newEmployee.save();
     console.log('Employee saved:', newEmployee);
     res.status(201).json(newEmployee);
@@ -14,6 +26,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 router.get('/', async (req, res) => {
   try {

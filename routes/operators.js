@@ -129,7 +129,7 @@ router.post('/set-credentials/:id', async (req, res) => {
   }
 });
 
-// GET operator profile by ID (for profile page)
+// GET /api/operator/:id/profile
 router.get('/:id/profile', async (req, res) => {
   const operatorId = req.params.id;
 
@@ -140,23 +140,14 @@ router.get('/:id/profile', async (req, res) => {
       return res.status(404).json({ message: 'Operator not found' });
     }
 
-    // Send only the required fields for profile page
-    const profileData = {
-      id: operator._id,
-      name: operator.name,
-      username: operator.username,
-      primaryPhoneNumber: operator.primaryPhoneNumber,
-      password: operator.passwordHash, // ⚠️ Only if you need it
-    };
-
-    res.status(200).json(profileData);
-  } catch (err) {
-    console.error('Error fetching operator profile:', err);
-    res.status(500).json({ message: 'Server error fetching operator profile' });
+    res.json({
+      name: operator.name || '', // or operator.firstName if that's how it's stored
+      email: operator.email || '',
+      primaryPhoneNumber: operator.primaryPhoneNumber || ''
+    });
+  } catch (error) {
+    console.error('Error fetching operator profile:', error);
+    res.status(500).json({ message: 'Server error while fetching profile' });
   }
 });
-
-
-
-
 module.exports = router;
