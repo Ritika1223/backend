@@ -1,18 +1,22 @@
+// models/Vehicle.js
 const mongoose = require('mongoose');
 
-const vehicleSchema = new mongoose.Schema({
-  vehicleNumber: { type: String, required: true, unique: true },
-  model: String,
-  capacity: Number,
-  driver: String,
-  route: String,
-  registrationDate: Date,
-  insuranceExpiry: Date,
-  fuelType: String,
-  engineNumber: String,
-  chassisNumber: String,
-  status: { type: String, default: 'Active' },
-  lastMaintenance: { type: Date, default: Date.now }
-});
+const VehicleSchema = new mongoose.Schema({
+  operatorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Operator',
+    required: true
+  },
+  busTypeModelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'BusTypeModel', // ✅ Reference to master list
+    required: true
+  },
+  busNumber: {
+    type: String,
+    required: true,
+    unique: true
+  }
+}, { timestamps: true });
 
-module.exports = mongoose.model('Vehicle', vehicleSchema);
+module.exports = mongoose.model('Vehicle', VehicleSchema);

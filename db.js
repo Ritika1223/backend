@@ -9,6 +9,7 @@ const db = mongoose.connection;
 
 db.on('disconnected', () => {
     console.log("MongoDB server disconnected");
+
 });
   
 module.exports = db;

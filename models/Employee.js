@@ -15,7 +15,12 @@ const employeeSchema = new mongoose.Schema({
   joinDate: String,
   salary: String,
   temporaryAddress: String,
-  permanentAddress: String
+  permanentAddress: String,
+  operatorId: {
+  type: String,
+  required: true
+}
+
 });
 
 

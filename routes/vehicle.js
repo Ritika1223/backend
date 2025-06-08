@@ -1,69 +1,49 @@
 const express = require('express');
 const router = express.Router();
-const Vehicle = require('../models/Vehicle');
+const Operator = require('../models/Operator');
 
-// POST /api/vehicles - Add a new vehicle
-router.post('/', async (req, res) => {
-  try {
-    console.log('POST /api/vehicles body:', req.body);
-    const newVehicle = new Vehicle(req.body);
-    await newVehicle.save();
-    console.log('Vehicle saved:', newVehicle);
-    res.status(201).json(newVehicle);
-  } catch (error) {
-    console.error('Error saving vehicle:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// GET /api/vehicles - Get all vehicles
+// GET /api/vehicles?operatorId=xxxxx
 router.get('/', async (req, res) => {
-   try {
+  try {
     const { operatorId } = req.query;
 
-    const filter = {};
-    if (operatorId) {
-      filter.operatorId = operatorId;
+    if (!operatorId) {
+      return res.status(400).json({ message: 'Operator ID is required' });
     }
-    const vehicles = await Vehicle.find(filter);
-    res.json(vehicles);
-  } catch (error) {
-    console.error('Error fetching vehicles:', error);
-    res.status(500).json({ message: error.message });
+
+    const operator = await Operator.findById(operatorId);
+
+    if (!operator) {
+      return res.status(404).json({ message: 'Operator not found' });
+    }
+
+    res.status(200).json(operator.buses); // return only bus list
+  } catch (err) {
+    console.error('Error fetching vehicles:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-// DELETE /api/vehicles/:id - Delete a vehicle by ID
-router.delete('/:id', async (req, res) => {
+router.post('/add-bus-number', async (req, res) => {
+  const { operatorId, busId, busNumber } = req.body;
+
   try {
-    const deletedVehicle = await Vehicle.findByIdAndDelete(req.params.id);
-    if (!deletedVehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-    res.json({ message: 'Vehicle deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting vehicle:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
+    const operator = await Operator.findById(operatorId);
+    if (!operator) return res.status(404).json({ message: 'Operator not found' });
 
-// PUT /api/vehicles/:id - Update a vehicle by ID
-router.put('/:id', async (req, res) => {
-  try {
-    const updatedVehicle = await Vehicle.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!updatedVehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-    res.json(updatedVehicle);
-  } catch (error) {
-    console.error('Error updating vehicle:', error);
-    res.status(500).json({ message: error.message });
+    const bus = operator.buses.id(busId);
+    if (!bus) return res.status(404).json({ message: 'Bus not found' });
+
+    if (!bus.busNumbers) bus.busNumbers = [];
+    bus.busNumbers.push(busNumber);
+
+    await operator.save();
+    res.status(200).json({ message: 'Bus number added', buses: operator.buses });
+  } catch (err) {
+    console.error('Error adding bus number:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 
-module.exports = router; 
+module.exports = router;

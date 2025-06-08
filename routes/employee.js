@@ -9,6 +9,9 @@ function generateEmpId() {
 
 router.post('/', async (req, res) => {
   try {
+    const { operatorId } = req.body;
+    if (!operatorId) return res.status(400).json({ message: 'Operator ID is required' });
+
     console.log('POST /api/employees body:', req.body);
 
     // Auto-generate empId and add to request body
@@ -29,13 +32,11 @@ router.post('/', async (req, res) => {
 
 
 router.get('/', async (req, res) => {
-  try {
-    const { operatorId } = req.query;
+   try {
+   const { operatorId } = req.query;
+    console.log("Operator ID from query:", operatorId); // 👈 Debug log
 
-    const filter = {};
-    if (operatorId) {
-      filter.operatorId = operatorId;
-    }
+    const filter = operatorId ? { operatorId } : {}; // concise
 
     const employees = await Employee.find(filter);
     res.status(200).json(employees);
@@ -75,5 +76,25 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// PUT /api/employees/:id/status - Toggle employee status
+// PATCH /api/employees/:id/status
+router.patch('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
 
+  try {
+    const updated = await Employee.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true } 
+    );
+    if (!updated) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(updated);
+  } catch (error) {
+    console.error('Error updating status:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 module.exports = router;
